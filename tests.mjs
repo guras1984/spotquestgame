@@ -1,0 +1,6 @@
+import assert from 'node:assert/strict';
+import{SCENES,LEVELS,objects,candidates,createQuestion,renderScene,rng}from'./scenes.js';
+assert.equal(SCENES.length,30);assert.equal(new Set(SCENES.map(s=>s.name)).size,30);
+for(const s of SCENES){assert.equal(objects(s).length,25);for(const key of Object.keys(LEVELS)){const q=createQuestion(s,key,rng(s.id+42));assert.equal(q.ids.length,LEVELS[key].count);assert.equal(new Set(q.ids).size,q.ids.length);const a=renderScene(s,q,false),b=renderScene(s,q,true);assert.notEqual(a,b);for(const d of candidates(s,key)){assert(d.x-d.r>=0&&d.x+d.r<800&&d.y-d.r>=0&&d.y+d.r<600)}const ds=candidates(s,key);for(let i=0;i<ds.length;i++)for(let j=i+1;j<ds.length;j++)assert(Math.hypot(ds[i].x-ds[j].x,ds[i].y-ds[j].y)>ds[i].r+ds[j].r,'overlapping hit areas')}}
+assert.equal(LEVELS.hell.count,15);assert.equal(LEVELS.hell.time,45);assert.equal(LEVELS.hell.hints,0);assert.equal(LEVELS.hell.penalty,Infinity);
+console.log('PASS: 30 scenes × 4 levels, unique questions, valid non-overlapping hit regions, hell rules.');
