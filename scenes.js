@@ -40,7 +40,7 @@ const circle=(x,y,r,c)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>`;
 const path=(d,c)=>`<path d="${d}" fill="${c}"/>`;
 const line=(x,y,a,b,c='#627768',w=3)=>`<path d="M${x} ${y}L${a} ${b}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
 // Detail is always confined to the small area around (12,-8); hit boxes follow it.
-function prop(kind,c,alt,detail){let shape='',decor='';const dark='#465d54',cream='#fff0cf';
+function prop(kind,c,changed,detail){const alt=false;let shape='',decor='';const dark='#465d54',cream='#fff0cf';
  switch(kind){
  case 'tree':shape=rect(-6,0,12,40,'#967756')+circle(-13,-14,27,c)+circle(14,-27,29,c)+circle(31,-4,23,c);decor=path('M7 -9Q13 -22 22 -9Q17 0 7 -9',alt?'#dcad60':'#4e8565');break;
  case 'flower':shape=rect(-17,17,34,23,'#c18e70')+line(0,18,0,-19)+line(0,10,-18,0)+circle(0,-24,13,c)+circle(-15,-16,12,c)+circle(-8,-1,12,c)+circle(11,-1,12,c)+circle(17,-19,12,c)+circle(0,-14,10,cream);decor=circle(12,-8,detail===3?3.5:5,alt?'#765d56':cream);break;
@@ -76,12 +76,53 @@ function prop(kind,c,alt,detail){let shape='',decor='';const dark='#465d54',crea
  case 'apple':shape=circle(-11,2,24,c)+circle(13,2,24,c)+line(1,-21,5,-39,'#866b4c',4)+path('M3 -29Q21 -47 29 -31Q17 -22 3 -29','#7d9d69');decor=alt?line(9,-13,15,-3,cream,4):circle(12,-8,4,cream);break;
  default:shape=circle(0,0,28,c);decor=circle(12,-8,alt?7:3,cream);
  }
- if(alt&&detail===0)return `<g opacity=".12">${shape}${decor}</g>`;
- if(alt&&detail===1)shape=shape.split(c).join(palette[(palette.indexOf(c)+2)%palette.length]);
- return shape+decor;
+ return (changed?alternateShape(kind,c,shape):shape)+decor;
 }
+// Swap recognizable silhouettes and parts, rather than changing tiny dots.
+function alternateShape(kind,c,base){
+ const cream='#fff0cf',dark='#465d54';
+ switch(kind){
+ case 'tree':return rect(-6,0,12,40,'#967756')+path('M0 -63L-39 -18H-24L-47 12H44L24 -18H39Z',c);
+ case 'flower':return rect(-17,17,34,23,'#c18e70')+line(0,18,0,-19)+line(0,10,-18,0)+path('M0 -46L9 -28L30 -34L23 -14L35 0L12 5L0 19L-12 5L-35 0L-23 -14L-30 -34L-9 -28Z',c)+circle(0,-14,10,cream);
+ case 'pot':return base.replace(path('M-25 0H25L19 37H-19Z',c),path('M-20 0H20Q37 17 20 37H-20Q-37 17 -20 0Z',c));
+ case 'fish':return base.replace(path('M-28 0L-48 -21V21Z',c),path('M-28 0L-52 -23L-43 0L-52 23Z',c)).replace(path('M-10 -18L0 -37L14 -17',c),path('M-10 -18Q-1 -45 14 -17Z',c));
+ case 'seaweed':return path('M-22 35V-39H-9V-20H3V-48H16V-6H30V-29H42V8H16V35ZM-22 5H-40V-20H-30V-6H-22Z','#5d947f');
+ case 'coral':return line(0,35,0,-20,c,10)+line(0,9,-25,-13,c,9)+line(-25,-13,-39,-24,c,8)+line(0,0,28,-26,c,9)+line(28,-26,28,-43,c,8);
+ case 'shell':return path('M-31 20Q-48 -20 0 -43Q48 -20 31 20L10 29H-10Z',c)+line(0,18,-20,-17,cream)+line(0,18,0,-25,cream)+line(0,18,20,-17,cream);
+ case 'star':return path('M0 -39L13 -20L34 -20L30 0L40 18L17 22L0 38L-17 22L-40 18L-30 0L-34 -20L-13 -20Z',c)+circle(-8,-5,2,dark);
+ case 'jelly':return base.replace(path('M-34 0Q-34 -48 0 -48Q34 -48 34 0Z',c),path('M-34 0L-29 -28Q0 -60 29 -28L34 0L23 -9L11 0L0 -9L-11 0L-23 -9Z',c));
+ case 'cup':return base.replace(`<ellipse cx="29" cy="0" rx="14" ry="16" fill="none" stroke="${c}" stroke-width="8"/>`,`<path d="M24 -17H44V17H24" fill="none" stroke="${c}" stroke-width="8" stroke-linejoin="round"/>`);
+ case 'cake':return base.replace(path('M-33 -17Q-15 -42 0 -33Q16 -42 33 -17Z',c),path('M-33 -17L-21 -37L-10 -25L0 -42L11 -25L22 -37L33 -17Z',c));
+ case 'bread':return base.replace(rect(-36,-25,72,54,'#d7a461',23),path('M-36 29V-10Q-39 -34 -16 -32Q0 -43 16 -32Q39 -34 36 -10V29Z','#d7a461'));
+ case 'bottle':case 'potion':return base.replace(path('M-10 -24Q-33 -10 -29 14Q-30 34 0 34Q30 34 29 14Q33 -10 10 -24Z',cream),path('M-10 -24L-30 -10V25L-19 34H19L30 25V-10L10 -24Z',cream));
+ case 'book':return base.replace(rect(-29,-36,58,73,c),path('M-29 -36H20L29 -24V37H-29Z',c));
+ case 'basket':return base.replace(`<path d="M-25 -8Q-25 -51 0 -51Q25 -51 25 -8" fill="none" stroke="#a48055" stroke-width="5"/>`,`<path d="M-25 -8V-39H25V-8" fill="none" stroke="#a48055" stroke-width="5" stroke-linejoin="round"/>`);
+ case 'mushroom':return base.replace(path('M-39 -5Q-35 -49 0 -49Q35 -49 39 -5Z',c),path('M-39 -5L-19 -40L0 -55L19 -40L39 -5Z',c));
+ case 'bird':return base.replace(path('M32 -23L48 -18L32 -13',cream),path('M32 -26L46 -26L50 -17L32 -13Z',cream)).replace(path('M-22 0L-45 -9L-31 17',c),path('M-22 0L-44 -18L-38 3L-49 13L-31 17Z',c));
+ case 'butterfly':return path('M-3 -12Q-38 -66 -39 -22Q-37 0 -9 4Q-41 8 -26 32Q-11 45 -3 11ZM3 -12Q38 -66 39 -22Q37 0 9 4Q41 8 26 32Q11 45 3 11Z',c)+rect(-3,-30,6,64,dark);
+ case 'cat':case 'bear':return base.replace(circle(-20,-29,13,c)+circle(20,-29,13,c),path('M-32 -15L-30 -48L-7 -30M7 -30L30 -48L32 -15Z',c));
+ case 'robot':return base.replace(rect(-27,-34,54,48,c,9),path('M-18 -34H18L31 -20V0L18 14H-18L-31 0V-20Z',c));
+ case 'rocket':return base.replace(path('M-18 23V-21Q0 -57 18 -21V23Z',c),path('M-18 23V-25L0 -48L18 -25V23Z',c));
+ case 'planet':return base.replace(`<ellipse cx="0" cy="6" rx="48" ry="11" transform="rotate(-23)" fill="none" stroke="${cream}" stroke-width="6"/>`,`<ellipse cx="0" cy="6" rx="48" ry="15" transform="rotate(23)" fill="none" stroke="${cream}" stroke-width="6"/>`);
+ case 'satellite':return base.replace(rect(-49,-12,31,30,c)+rect(18,-12,31,30,c),path('M-49 -12L-18 -4V18L-49 26ZM18 -4L49 -12V26L18 18Z',c));
+ case 'ball':return base.replace(path('M-30 -16Q0 0 -15 30L0 33Q18 0 0 -34Z',cream),path('M-30 -16L-2 -7L-15 30L0 33L15 -2L0 -34Z',cream));
+ case 'balloon':return base.replace(`<ellipse cy="-14" rx="29" ry="34" fill="${c}"/>`,path('M0 20Q-49 -9 -27 -37Q-11 -51 0 -32Q11 -51 27 -37Q49 -9 0 20Z',c));
+ case 'block':return base.replace(rect(-32,-30,64,64,c,7),path('M-32 34V-10L0 -38L32 -10V34Z',c));
+ case 'tent':return base.replace(path('M-45 33L0 -47L45 33Z',c),path('M-45 33Q-38 -47 0 -47Q38 -47 45 33Z',c));
+ case 'lantern':return base.replace(rect(-24,-22,48,48,c,7),path('M-16 -27H16L27 -13V16L16 26H-16L-27 16V-13Z',c));
+ case 'flag':return base.replace(path('M-23 -42H35L23 -20L35 0H-23Z',c),path('M-23 -42L39 -21L-23 0Z',c));
+ case 'chest':return base.replace(rect(-37,-25,74,59,c,9),path('M-37 34V-8Q-37 -36 0 -36Q37 -36 37 -8V34Z',c));
+ case 'clock':return base.replace(circle(0,0,35,c),rect(-35,-35,70,70,c,9));
+ case 'frame':return base.replace(rect(-35,-37,70,74,c),path('M-35 37V-14Q-35 -49 0 -49Q35 -49 35 -14V37Z',c));
+ case 'apple':return base.replace(circle(-11,2,24,c)+circle(13,2,24,c),path('M0 -29Q-17 -30 -14 -10Q-42 5 -23 25Q0 44 23 25Q42 5 14 -10Q17 -30 0 -29Z',c));
+ default:throw new Error('Missing shape variant: '+kind);
+ }
+}
+
 export function objects(scene){const r=rng(scene.id*731+43);return Array.from({length:25},(_,i)=>{let row=Math.floor(i/5),col=i%5;return{id:i,x:85+col*155+(r()-.5)*38,y:100+row*105+(r()-.5)*15,kind:scene.type==='forest'&&row<2?(['tree','bird','butterfly'][(i+scene.id)%3]):scene.props[(i+Math.floor(r()*3))%scene.props.length],color:palette[(i+scene.id)%palette.length],scale:.80+r()*.18}})}
-export function candidates(scene,level){return objects(scene).map(o=>({id:o.id,x:o.x+12*o.scale,y:o.y-8*o.scale,r:level==='easy'?38:level==='normal'?28:level==='hard'?20:16}))}
+export function candidates(scene,level){return objects(scene).map(o=>({id:o.id,x:o.x,y:o.y-5*o.scale,r:56,markR:44}))}
+export function findHit(scene,level,ids,x,y,padding={}){return candidates(scene,level).filter(d=>ids.includes(d.id)).map(d=>({...d,distance:Math.hypot((d.x-x)/Math.max(d.r,padding.rx??0),(d.y-y)/Math.max(d.r,padding.ry??0))})).filter(d=>d.distance<=1).sort((a,b)=>a.distance-b.distance)[0]??null}
+
 export function createQuestion(scene,level,random=Math.random){const cfg=LEVELS[level];return{sceneId:scene.id,level,ids:shuffle(candidates(scene,level),random).slice(0,cfg.count).map(d=>d.id)}}
 function backdrop(s){let out=rect(0,0,800,600,s.sky)+rect(0,365,800,235,s.ground);const indoor=['cafe','room','kitchen','castle'].includes(s.type);if(indoor){for(let x=40;x<800;x+=115)out+=rect(x,0,2,365,'#ffffff20');out+=rect(290,28,220,137,'#f3e7c8',35)+rect(300,38,200,116,'#b7cfbf',28)+line(400,38,400,153,'#f3e7c8',8)+line(300,96,500,96,'#f3e7c8',8);for(let y of [149,256,362])out+=rect(24,y,752,13,'#ad9476',3)+rect(36,y+13,728,6,'#0000000b');out+=path('M0 600L170 372M300 600L350 372M600 600L550 372M800 600L720 372','none').replace('fill="none"','stroke="#ffffff25" stroke-width="2"');}
  else if(s.type==='ocean'){for(let i=0;i<22;i++)out+=circle(20+(i*137)%780,30+(i*83)%490,4+(i%3)*3,'#ffffff22');out+=path('M0 500Q200 430 400 510T800 485V600H0Z','#dac79d')+path('M0 560Q220 510 450 555T800 540V600H0Z','#e6d5ae');}
@@ -99,4 +140,4 @@ function backdrop(s){let out=rect(0,0,800,600,s.sky)+rect(0,365,800,235,s.ground
  if(s.type==='room')out+=`<ellipse cx="400" cy="530" rx="280" ry="60" fill="#e3c99d" opacity=".6"/>`;
  return out;
 }
-export function renderScene(scene,question=null,modified=false){const detail=question?LEVELS[question.level].detail:0;return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="${scene.name}${modified?' 비교 그림':' 원본 그림'}"><defs><filter id="grain${scene.id}${modified?'b':'a'}"><feTurbulence type="fractalNoise" baseFrequency=".65" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope=".035"/></feComponentTransfer><feBlend in="SourceGraphic" mode="multiply"/></filter></defs>${backdrop(scene)}${objects(scene).map(o=>`<g transform="translate(${o.x} ${o.y}) scale(${o.scale})">${`<ellipse cy="41" rx="35" ry="5" fill="#233d3212"/>`}${prop(o.kind,o.color,modified&&question?.ids.includes(o.id),detail)}</g>`).join('')}<rect width="800" height="600" filter="url(#grain${scene.id}${modified?'b':'a'})" opacity=".25" pointer-events="none" fill="transparent"/></svg>`}
+export function renderScene(scene,question=null,modified=false){const detail=question?LEVELS[question.level].detail:0;return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="${scene.name}${modified?' 비교 그림':' 원본 그림'}"><defs><filter id="grain${scene.id}${modified?'b':'a'}"><feTurbulence type="fractalNoise" baseFrequency=".65" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="linear" slope=".035"/></feComponentTransfer><feBlend in="SourceGraphic" mode="multiply"/></filter></defs>${backdrop(scene)}${objects(scene).map(o=>`<g data-object="${o.x},${o.y},${o.scale}" transform="translate(${o.x} ${o.y}) scale(${o.scale})">${`<ellipse cy="41" rx="35" ry="5" fill="#233d3212"/>`}${prop(o.kind,o.color,modified&&question?.ids.includes(o.id),detail)}</g>`).join('')}<rect width="800" height="600" filter="url(#grain${scene.id}${modified?'b':'a'})" opacity=".25" pointer-events="none" fill="transparent"/></svg>`}
